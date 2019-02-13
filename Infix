@@ -1,0 +1,42 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package infix;
+
+/**
+ *
+ * @author corn_
+ */
+import java.io.*;
+import java.util.*;
+import java.lang.*;
+public class InFix {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Would you like to an equation to be solved(yes/no)?");
+        String userChoice = sc.nextLine();
+        while (userChoice.equalsIgnoreCase("yes")){
+            System.out.println("Enter an equation");
+            String equation = sc.nextLine();
+            ProblemSolver solved = new ProblemSolver();
+            if (solved.validExpression(equation) == false){
+                System.out.println("Not a valid expression");
+            }
+            else{
+                String[] postFix = solved.convertToPostFix(equation);
+                System.out.println(solved.solvePostFix(postFix));
+
+
+            }
+            System.out.println("Would you like to enter another equation(yes/no)? ");
+            userChoice = sc.nextLine();
+        }
+    }
+    
+}
