@@ -1,0 +1,38 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package infix;
+
+/**
+ *
+ * @author corn_
+ */
+public interface StackADT<T> {
+    
+    /*adds specified element to the top of this stack
+    * @param elemtn to be pushed into the stack 
+    */
+    public void push(T element);
+    
+    /* removes and return the top element of the stack 
+    @return the element removed from the stack
+    */
+    public T pop();
+    
+    /*returns without removing the top element of the stack
+    * @return the element on top of the stack
+    */
+    public T peek();
+    
+    /*returns true if the stack is empty, false if not
+    * @returns true/false value
+    */
+    public boolean isEmpty();
+    
+    /* returns the top value of stack which is also the size
+    *@returns integer top which is the size of stack
+    */
+    public int size();
+}
