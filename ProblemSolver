@@ -1,0 +1,293 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package infix;
+
+/**
+ *
+ * @author corn_
+ */
+import java.io.*;
+import java.util.*;
+import java.lang.*;
+
+
+public class ProblemSolver<T> {
+    private ArrayStack<Integer> operand;
+    private ArrayStack<Character> operator;
+    private Integer result; 
+    
+    public ProblemSolver()
+    {
+        operand = new ArrayStack<>();
+        operator = new ArrayStack<>();
+        result = 0;
+    }
+    
+    /*checks to see if expression entered is valid
+    * @param takes equation entered by user as a String as parameters 
+    * @returns true if no operators left in stack, false otherwise
+    */
+    public boolean validExpression(String eq)
+    {
+        int index = 0;
+        //search every element in expression given 
+        while (index < eq.length()){
+            switch (eq.charAt(index)) {
+                //push left parenthesis to stack 
+                case '(':
+                    operator.push(eq.charAt(index));
+                    index++;
+                    break;
+                //remove left parenthesis from stack when right parenthesis found
+                case ')':
+                    operator.pop();
+                    index++;
+                    break;
+                default:
+                    index++;
+                    break;
+            }
+        }
+        //stack should be empty if we find corresponding left and right parenthesis, otherwise expression not valid
+        return operator.isEmpty();
+    }
+    
+    /* converts the infix equation entered by user to a postfix equation
+    * @param: takes the equation entered by user as arg
+    * @returns a string array of elements set to postFix, use string[] in case of nums with more than one digit
+    */
+    public String[] convertToPostFix(String eq)
+    {   //create a String array for our postFix expression
+        //increasing ai indicates moving to the next avaiable position of our postFix equation array
+        //increasing index indicates moving to the next element of the expression taken by our method
+        String[] equation = new String[eq.length()];
+        int ai = 0;
+        int index = 0; 
+        //go through every element of the expression while one exists 
+        while (index < eq.length()){
+            //for spaces we just skip by increasing the index
+            if (eq.charAt(index) == ' ')
+            {
+                index++;
+            }
+            //if the element is a number we create a String num and add it to that 
+            else if ((isNumber(eq.charAt(index)) && (index < eq.length())))
+            {
+                String currentNum = eq.charAt(index) + "";
+                index++;
+                //check next element to see if number is more than one digit
+                //while the element is a number we add it to the string 
+                try{
+                    while (isNumber(eq.charAt(index)) && (index < eq.length()))
+                    {
+                            currentNum += eq.charAt(index);
+                            index++; 
+                            
+                    }
+                }
+                //this exception catch is if our last number in the expression is more than one digit
+                //it will throw the exception if we reach the end of the expression, 
+                //at which point we will add the string current num to the postFix equation
+                catch(StringIndexOutOfBoundsException f){
+                    equation[ai] += currentNum;
+                    
+                }
+                //we add our currentNum to the postFix equation and move to the next available position
+                equation[ai] = currentNum;
+                ai++;
+            }
+            //when we see a left parenthesis we add it to the operator stack
+            else if (eq.charAt(index) == '('){
+                operator.push(eq.charAt(index));
+                index++;
+            }
+            /*when we find a right parenthesis we need to pop elements on the operator stack
+            *and add them to our postfix equation until we find the left parenthesis,which will exit the loop
+            *nothing needs to be done with the left or right parenthesis, they're just indicators for our steps
+            */
+            else if (eq.charAt(index) == ')'){
+                Character top = operator.pop();
+                while (top != '('){
+                    equation[ai] = Character.toString(top);
+                    top = operator.pop();
+                    ai++;
+                    }
+                index++;
+                }
+            //if the element is an operator, we check to see if it has precedence over the one on the stack
+            else if (isOper(eq.charAt(index))){
+                try{
+                    //if the stack operator has precedence, we pop it from the stack and add it to our postFix equation
+                    //then we push the current operator in the expression onto the stack and move to the next position in our postFix equation
+                    if ((higherPre(operator.peek(),eq.charAt(index)))){
+                            equation[ai] = Character.toString(operator.pop());
+                            operator.push(eq.charAt(index));
+                            ai++;
+                    }
+                    //if the stack operator does not have precedence then we can push the current operator to the stack
+                    else{
+                        operator.push(eq.charAt(index));
+                    }
+                }
+                /* when we check precedence we may be comparing the operator to an empty stack, this exception will 
+                *be caught and will proceed to push the current operator to the operator stack
+                */
+                catch(EmptyStackException e){
+                    operator.push(eq.charAt(index));
+                }
+                
+                index++;
+            }
+        }
+        /*Once we have finished going through our user given expression we may have some operators left on the stack.
+        *These operators are already in the correct order so here we will pop the operators and add them to the postFix
+        *until the operator stack is empty 
+        */
+        while (!operator.isEmpty()){
+            equation[ai] = Character.toString(operator.pop());
+            ai++;
+        }
+            return equation;
+    }
+        
+    public int solvePostFix(String[] equation)
+    {   //index is for postFix equation
+        int index = 0;
+        //go through each element of the postFix equation
+        while (index < equation.length){
+            //if the element is null we skip it
+            if (equation[index] == null){
+                index++;
+            }
+            //otherwise, if the element is an operator we solve the problem with the current operator and pop two numbers of the stack
+            //the result of the problem is pushed to the operand stack with the performOperation method
+            //if the elements not an operator, its a number so we push it onto the operand stack
+            else{
+                if (isOper(equation[index].charAt(0))){
+                    performOperation(equation[index].charAt(0));
+                    index++;
+                }
+                else{
+                    operand.push(Integer.parseInt(equation[index]));
+                    index++;
+                }
+                
+            }
+        }
+            
+        //return the final result from the operand stack
+        return operand.pop();
+    }
+    /* pops the last two numbers on the stack and evaluates them with the operator taken as an arg
+    * @param: takes a Character which as an operator
+    * returns nothing, pushes the result onto the operand stack
+    */ 
+    public void performOperation(Character op){
+        int n2 = operand.pop();
+        int n1 = operand.pop();
+        int value = 0; 
+        switch (op){
+            case '/': 
+                value = n1 / n2; 
+                break; 
+            case '*': 
+                value = n1  *n2; 
+                break; 
+            case '+': 
+                value = n1 + n2; 
+                break; 
+            case '-': 
+                value = n1 - n2;  
+                break; 
+            default: 
+                break; 
+        }
+        operand.push(value);
+    }
+    
+    //
+    public boolean higherPre(Character stackOp, Character currentOp )
+    {
+        int soP = 0;
+        int coP = 0;
+        boolean highP = false; 
+        if (null == stackOp){
+            soP = 1;
+        }
+        else switch (stackOp) {
+            case '/':
+            case '*':
+                soP = 3;
+                break;
+            case '+':
+            case '-':
+                soP = 2;
+                break;
+            default:
+                soP = 1;
+                break;
+        }
+        if (null == currentOp){ 
+            coP = 1; 
+        }
+        else switch (currentOp) {
+            case '/':
+            case '*':
+                coP = 3;
+                break; 
+            case '+':
+            case '-':
+                coP = 2;
+                break;
+            default:
+                coP = 1;
+                break;
+        }
+        if (soP >= coP){
+            highP = true; 
+        }
+        return highP;
+    }
+    
+    public boolean isNumber(char value)
+    {
+        boolean isNum = false;
+        try{
+            int num = Integer.parseInt(Character.toString(value));
+            isNum = true;
+        }
+        catch(NumberFormatException e){
+        }
+        return isNum;
+    }
+    
+    public boolean isOper(Character o)
+    {
+        boolean isOp = false;
+        switch(o){
+            case '+':{
+                isOp = true;
+                break;
+            }
+            case '-':{
+                isOp = true;
+                break;
+            }
+            case '*':{
+                isOp = true;
+                break;
+            }
+            case '/':{
+                isOp = true;
+                break;
+            }
+            default:{
+                break;
+            }
+        }
+        return isOp;
+    }
+}
